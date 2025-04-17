@@ -15,7 +15,7 @@ export default function RecordingInterface() {
   const [isChunking, setIsChunking] = useState(false);
   const [totalChunks, setTotalChunks] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const MIN_RECORDING_TIME = 3; // 3 seconds minimum recording time
+
   const [soapNote, setSoapNote] = useState<{
     subjective: string;
     objective: string;
@@ -27,14 +27,8 @@ export default function RecordingInterface() {
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const MAX_RECORDING_TIME = 50 * 60; // 50 minutes in seconds
-
   const startRecording = async () => {
     try {
-      if (recordingTime >= MAX_RECORDING_TIME) {
-        console.warn("Maximum recording time reached");
-        return;
-      }
       audioChunksRef.current = [];
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, {
@@ -49,18 +43,13 @@ export default function RecordingInterface() {
       // const [totalChunks, setTotalChunks] = useState(0);
 
       const processRecording = async () => {
-        if (recordingTime < MIN_RECORDING_TIME) {
-          setError("Recording must be at least 3 seconds long");
-          return;
-        }
-
         const audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
         });
 
         if (audioBlob.size === 0) {
           setError(
-            "No audio detected. Please ensure your microphone is working and try speaking during the recording."
+            "No speech detected. Please speak clearly during the recording or check your microphone permissions."
           );
           return;
         }
@@ -77,7 +66,26 @@ export default function RecordingInterface() {
           setSoapNote(soapNoteResult);
         } catch (error) {
           console.error("Error processing recording:", error);
-          setError("Failed to transcribe audio. Please try recording again.");
+          if (error instanceof Error) {
+            if (error.message.includes("No transcript generated")) {
+              setError(
+                "We couldn't detect any speech in your recording. Please try speaking more clearly."
+              );
+            } else if (
+              error.message.includes("network") ||
+              error.message.includes("connection")
+            ) {
+              setError(
+                "Network error occurred. Please check your internet connection and try again."
+              );
+            } else {
+              setError(
+                "An error occurred while processing your recording. Please try again."
+              );
+            }
+          } else {
+            setError("An unexpected error occurred. Please try again.");
+          }
         } finally {
           setIsProcessing(false);
           setIsChunking(false);
@@ -108,9 +116,6 @@ export default function RecordingInterface() {
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
-      if (recordingTime >= MAX_RECORDING_TIME) {
-        console.warn("Recording stopped due to time limit");
-      }
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream
         .getTracks()

@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, Square } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface RecordingCardProps {
   isRecording: boolean;
@@ -25,6 +26,19 @@ export function RecordingCard({
   totalChunks,
   error,
 }: RecordingCardProps) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (audioBlob) {
+      const url = URL.createObjectURL(audioBlob);
+      setAudioUrl(url);
+
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    }
+  }, [audioBlob]);
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -32,9 +46,6 @@ export function RecordingCard({
       .toString()
       .padStart(2, "0")}`;
   };
-
-  const MAX_RECORDING_TIME = 50 * 60; // 50 minutes in seconds
-  const recordingProgress = (recordingTime / MAX_RECORDING_TIME) * 100;
 
   return (
     <Card>
@@ -52,12 +63,7 @@ export function RecordingCard({
               <div className="text-2xl font-mono">
                 {formatTime(recordingTime)}
               </div>
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-red-600 transition-all duration-300"
-                  style={{ width: `${recordingProgress}%` }}
-                />
-              </div>
+
               {isChunking && (
                 <div className="text-sm text-gray-500">
                   Processing chunks: {totalChunks}
@@ -73,7 +79,6 @@ export function RecordingCard({
               <Button
                 onClick={onStartRecording}
                 className="bg-red-600 hover:bg-red-700"
-                disabled={recordingTime >= MAX_RECORDING_TIME}
               >
                 <Mic className="mr-2 h-4 w-4" />
                 Start Recording
@@ -92,7 +97,8 @@ export function RecordingCard({
             audioBlob && (
               <div className="w-full mt-4">
                 <audio
-                  src={URL.createObjectURL(audioBlob)}
+                  ref={audioRef}
+                  src={audioUrl || undefined}
                   controls
                   className="w-full"
                 />
