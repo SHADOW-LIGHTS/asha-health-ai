@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { AudioUpload } from "./audio-upload";
 
 interface RecordingCardProps {
   isRecording: boolean;
   recordingTime: number;
   onStartRecording: () => void;
   onStopRecording: () => void;
+  onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   audioBlob: Blob | null;
   isChunking?: boolean;
   totalChunks?: number;
@@ -21,6 +23,7 @@ export function RecordingCard({
   recordingTime,
   onStartRecording,
   onStopRecording,
+  onFileUpload,
   audioBlob,
   isChunking,
   totalChunks,
@@ -52,7 +55,7 @@ export function RecordingCard({
       <CardHeader>
         <CardTitle className="flex items-center">
           <Mic className="mr-2 h-5 w-5" />
-          Recording
+          Record
         </CardTitle>
       </CardHeader>
 
@@ -76,13 +79,16 @@ export function RecordingCard({
 
           <div className="flex space-x-4">
             {!isRecording ? (
-              <Button
-                onClick={onStartRecording}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                <Mic className="mr-2 h-4 w-4" />
-                Start Recording
-              </Button>
+              <>
+                <Button
+                  onClick={onStartRecording}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <Mic className="mr-2 h-4 w-4" />
+                  Start Recording
+                </Button>
+                <AudioUpload onFileUpload={onFileUpload} />
+              </>
             ) : (
               <Button onClick={onStopRecording} variant="outline">
                 <Square className="mr-2 h-4 w-4" />

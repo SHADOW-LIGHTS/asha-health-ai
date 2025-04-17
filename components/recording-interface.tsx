@@ -102,7 +102,7 @@ export default function RecordingInterface() {
           setIsChunking(true);
         }
       };
-      mediaRecorder.start(5000); // Collect data in 5-second chunks
+      mediaRecorder.start(10000); // Collect data in 10-second chunks
       setIsRecording(true);
       setRecordingTime(0);
 
@@ -130,6 +130,52 @@ export default function RecordingInterface() {
     }
   };
 
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("audio/")) {
+      setError("Please upload an audio file");
+      return;
+    }
+
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const fileBuffer = await file.arrayBuffer();
+      const audioBlob = new Blob([fileBuffer], { type: "audio/webm" });
+
+      if (audioBlob.size === 0) {
+        setError("The audio file appears to be empty or corrupted");
+        return;
+      }
+
+      setAudioBlob(audioBlob);
+
+      const transcriptionText = await transcribeAudio(audioBlob);
+      setTranscription(transcriptionText);
+
+      const soapNoteResult = await generateSoapNote(transcriptionText);
+      setSoapNote(soapNoteResult);
+    } catch (error) {
+      console.error("Error processing audio file:", error);
+      if (error instanceof Error) {
+        setError(
+          error.message.includes("No speech detected")
+            ? "No speech detected in the audio file"
+            : "An error occurred while processing the audio file. Please try again."
+        );
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <RecordingCard
@@ -137,6 +183,7 @@ export default function RecordingInterface() {
         recordingTime={recordingTime}
         onStartRecording={startRecording}
         onStopRecording={stopRecording}
+        onFileUpload={handleFileUpload}
         audioBlob={audioBlob}
         isChunking={isChunking}
         totalChunks={totalChunks}
