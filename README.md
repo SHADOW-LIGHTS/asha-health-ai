@@ -18,3 +18,10 @@ To build and run the entire project:
 
 ```bash
 npm run asha
+```
+
+For consecutive run's:
+```bash
+npm run dev
+
+```
