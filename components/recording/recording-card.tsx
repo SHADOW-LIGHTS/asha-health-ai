@@ -55,7 +55,7 @@ export function RecordingCard({
       <CardHeader>
         <CardTitle className="flex items-center">
           <Mic className="mr-2 h-5 w-5" />
-          Record
+          {isRecording ? "Recording" : "Record"}
         </CardTitle>
       </CardHeader>
 
@@ -74,7 +74,7 @@ export function RecordingCard({
               )}
             </div>
           ) : (
-            <div className="text-gray-500">Ready to record</div>
+            <div className="text-gray-500">Record or Upload</div>
           )}
 
           <div className="flex space-x-4">

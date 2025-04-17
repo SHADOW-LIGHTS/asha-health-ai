@@ -1,17 +1,19 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
+import { SoapSection } from "./soap-section";
 
 interface ResultsTabsProps {
   isProcessing: boolean;
   transcription: string;
   soapNote: {
-    subjective: string;
-    objective: string;
-    assessment: string;
-    plan: string;
+    subjective: { text: string; sources: string[] };
+    objective: { text: string; sources: string[] };
+    assessment: { text: string; sources: string[] };
+    plan: { text: string; sources: string[] };
   } | null;
 }
 
@@ -39,7 +41,7 @@ export function ResultsTabs({
                 <span className="ml-2 text-gray-600">Processing audio...</span>
               </div>
             ) : (
-              <div className="whitespace-pre-wrap bg-white p-4 rounded-md border border-gray-200">
+              <div className="whitespace-pre-wrap bg-white">
                 {transcription}
               </div>
             )}
@@ -49,8 +51,52 @@ export function ResultsTabs({
 
       <TabsContent value="soap">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex justify-between items-center">
             <CardTitle>SOAP Note</CardTitle>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    soapNote
+                      ? Object.entries(soapNote)
+                          .map(
+                            ([key, section]) =>
+                              `${
+                                key.charAt(0).toUpperCase() + key.slice(1)
+                              }:\n${section.text}`
+                          )
+                          .join("\n\n")
+                      : ""
+                  )
+                }
+              >
+                Copy
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!soapNote) return;
+                  const content = Object.entries(soapNote)
+                    .map(
+                      ([key, section]) =>
+                        `${key.charAt(0).toUpperCase() + key.slice(1)}:\n${
+                          section.text
+                        }`
+                    )
+                    .join("\n\n");
+                  const blob = new Blob([content], { type: "text/plain" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "soap-note.txt";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Download
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {isProcessing ? (
@@ -62,22 +108,26 @@ export function ResultsTabs({
               </div>
             ) : soapNote ? (
               <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900">Subjective</h3>
-                  <p className="mt-1 text-gray-700">{soapNote.subjective}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Objective</h3>
-                  <p className="mt-1 text-gray-700">{soapNote.objective}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Assessment</h3>
-                  <p className="mt-1 text-gray-700">{soapNote.assessment}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Plan</h3>
-                  <p className="mt-1 text-gray-700">{soapNote.plan}</p>
-                </div>
+                <SoapSection
+                  title="Subjective"
+                  text={soapNote.subjective.text}
+                  sources={soapNote.subjective.sources}
+                />
+                <SoapSection
+                  title="Objective"
+                  text={soapNote.objective.text}
+                  sources={soapNote.objective.sources}
+                />
+                <SoapSection
+                  title="Assessment"
+                  text={soapNote.assessment.text}
+                  sources={soapNote.assessment.sources}
+                />
+                <SoapSection
+                  title="Plan"
+                  text={soapNote.plan.text}
+                  sources={soapNote.plan.sources}
+                />
               </div>
             ) : (
               <div className="text-gray-500 text-center py-4">

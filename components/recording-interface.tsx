@@ -17,10 +17,10 @@ export default function RecordingInterface() {
   const [error, setError] = useState<string | null>(null);
 
   const [soapNote, setSoapNote] = useState<{
-    subjective: string;
-    objective: string;
-    assessment: string;
-    plan: string;
+    subjective: { text: string; sources: string[] };
+    objective: { text: string; sources: string[] };
+    assessment: { text: string; sources: string[] };
+    plan: { text: string; sources: string[] };
   } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -177,25 +177,29 @@ export default function RecordingInterface() {
   };
 
   return (
-    <div className="space-y-6">
-      <RecordingCard
-        isRecording={isRecording}
-        recordingTime={recordingTime}
-        onStartRecording={startRecording}
-        onStopRecording={stopRecording}
-        onFileUpload={handleFileUpload}
-        audioBlob={audioBlob}
-        isChunking={isChunking}
-        totalChunks={totalChunks}
-        error={error}
-      />
+    <div className="space-y-8 p-4 max-w-3xl mx-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <RecordingCard
+          isRecording={isRecording}
+          recordingTime={recordingTime}
+          onStartRecording={startRecording}
+          onStopRecording={stopRecording}
+          onFileUpload={handleFileUpload}
+          audioBlob={audioBlob}
+          isChunking={isChunking}
+          totalChunks={totalChunks}
+          error={error}
+        />
+      </div>
 
       {(transcription || isProcessing) && (
-        <ResultsTabs
-          isProcessing={isProcessing}
-          transcription={transcription}
-          soapNote={soapNote}
-        />
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <ResultsTabs
+            isProcessing={isProcessing}
+            transcription={transcription}
+            soapNote={soapNote}
+          />
+        </div>
       )}
     </div>
   );

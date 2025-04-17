@@ -4,10 +4,10 @@ import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 
 type SoapNote = {
-  subjective: string;
-  objective: string;
-  assessment: string;
-  plan: string;
+  subjective: { text: string; sources: string[] };
+  objective: { text: string; sources: string[] };
+  assessment: { text: string; sources: string[] };
+  plan: { text: string; sources: string[] };
 };
 
 // Helper function to extract JSON from the response
@@ -31,19 +31,32 @@ export async function generateSoapNote(
     const prompt = `
 You are a medical assistant AI that helps doctors create SOAP notes from transcriptions of doctor-patient visits.
 
-Based on the following transcription of a doctor-patient visit, create a detailed SOAP note.
+Based on the following transcription of a doctor-patient visit, create a detailed SOAP note with source references.
 
 Transcription:
 ${transcription}
 
 Return ONLY a valid JSON object with the following structure, without any markdown formatting, code blocks, or additional text:
 {
-  "subjective": "Patient's description of symptoms and concerns",
-  "objective": "Doctor's observations, vital signs, examination findings",
-  "assessment": "Doctor's diagnosis or impression",
-  "plan": "Treatment plan, medications, follow-up instructions"
+  "subjective": {
+    "text": "Patient's description of symptoms and concerns",
+    "sources": ["excerpts from transcript that support this section"]
+  },
+  "objective": {
+    "text": "Doctor's observations, vital signs, examination findings",
+    "sources": ["excerpts from transcript that support this section"]
+  },
+  "assessment": {
+    "text": "Doctor's diagnosis or impression",
+    "sources": ["excerpts from transcript that support this section"]
+  },
+  "plan": {
+    "text": "Treatment plan, medications, follow-up instructions",
+    "sources": ["excerpts from transcript that support this section"]
+  }
 }
 
+For each section, include 1-3 key excerpts from the transcript that directly support the content.
 Make sure each section is comprehensive and follows medical documentation standards.
 `;
 
@@ -78,10 +91,22 @@ Make sure each section is comprehensive and follows medical documentation standa
     console.error("SOAP note generation error:", error);
     // Return a fallback SOAP note with error messages
     return {
-      subjective: "Error generating subjective section. Please try again.",
-      objective: "Error generating objective section. Please try again.",
-      assessment: "Error generating assessment section. Please try again.",
-      plan: "Error generating plan section. Please try again.",
+      subjective: {
+        text: "Error generating subjective section. Please try again.",
+        sources: [],
+      },
+      objective: {
+        text: "Error generating objective section. Please try again.",
+        sources: [],
+      },
+      assessment: {
+        text: "Error generating assessment section. Please try again.",
+        sources: [],
+      },
+      plan: {
+        text: "Error generating plan section. Please try again.",
+        sources: [],
+      },
     };
   }
 }
